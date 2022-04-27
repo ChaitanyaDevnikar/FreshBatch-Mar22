@@ -1,0 +1,41 @@
+
+-----Create the bridge network------
+
+1. Create a bridge network called prices-net.
+
+---command---
+
+docker network create --driver bridge prices-net
+
+-----Create the base-price container-----
+
+2. Create a container for the component that serves base prices.
+
+---command---
+
+docker run --name base-price -d --network prices-net linuxacademycontent/prices-base-price:1
+
+-----Create the sales container-----
+
+3. Create a container for the component that serves products on sale.
+
+---command---
+
+docker run --name sales -d --network prices-net linuxacademycontent/prices-sales:1
+
+-----Create the total-price container-----
+
+4. Create a container for the component that serves the total prices of products.
+
+---command---
+
+docker run --name total-price -d --network prices-net -p 8080:80 linuxacademycontent/prices-total-price:1
+
+-----For Verify that everything is set up correctly-----
+
+We get a list of products and their final prices.
+The total-prices container calculates these prices by first querying the other two containers. 
+
+---command---
+
+curl localhost:8080

@@ -1,0 +1,56 @@
+
+-----Create the counter container with the provided command, and mount the shared volume to the container-----
+
+1. The first container should be called counter. It will generate some log data for testing by counting numbers.
+   For the counter container, use the busybox image with the following command:
+		sh -c 'i=0; while true; do echo "$i: $(date)" >> /var/log/test/1.log; i=$((i+1)); sleep 1; done'.
+   This will write some test data to /var/log/test/1.log every second.
+   
+---command---
+
+docker run --name counter -d
+--mount type=volume,source=test-data,destination=/var/log/test
+busybox
+sh -c 'i=0; while true; do echo "$i: $(date)" >> /var/log/test/1.log; i=$((i+1)); sleep 1; done'
+
+-----Create a volume called test-data-----
+
+2. Create a volume called test-data, and mount it to the counter container at /var/log/test.
+   This volume will be shared with the fluentd container so that it can read the test data
+   
+---command---
+
+docker volume create test-data
+
+3. We can confirm that the counter container is generating data by examining the file inside the container:
+
+---command---
+
+docker exec counter cat /var/log/test/1.log
+
+-----Create the fluentd container to transform and output the data from the counter container-----
+
+3. Create a second container called fluentd with the k8s.gcr.io/fluentd-gcp:1.30 image.
+4. Provide an environment variable to the fluentd container called FLUENTD_ARGS with the value -c /fluentd/etc/fluent.conf
+5. Mount the test-data volume to the fluentd container at /var/log/input.
+6. There is a fluentd configuration file located on the server at /etc/fluentd/fluent.conf.
+   Use a bind mount to mount this file to the fluentd container at /fluentd/etc/fluent.conf.
+7. Create an additional bind mount so that the fluentd container can output the transformed log data to the host's file system.
+   Mount the directory /etc/fluentd/output on the host to /var/log/output on the fluentd container
+
+
+---commands for 3, 4, 5, 6, 7---
+
+docker run --name fluentd -d
+--mount type=volume,source=test-data,destination=/var/log/input
+--mount type=bind,source=/etc/fluentd/fluent.conf,destination=/fluentd/etc/fluent.conf
+--mount type=bind,source=/etc/fluentd/output,destination=/var/log/output
+--env FLUENTD_ARGS="-c /fluentd/etc/fluent.conf"
+k8s.gcr.io/fluentd-gcp:1.30
+
+8. For verify that the fluentd container is generating output on the Docker host.
+
+---command---
+
+ls /etc/fluentd/output
+

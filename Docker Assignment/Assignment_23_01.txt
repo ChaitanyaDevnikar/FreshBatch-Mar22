@@ -1,0 +1,18 @@
+-----Scale the service-----
+
+1. Scale the service called products-fruit to 5 replicas
+
+---command---
+
+docker service update --replicas 5 products-fruit
+
+-----Create the products-vegetables service-----
+
+2. Create a new service called products-vegetables running the linuxacademycontent/vegetable-service:1.0.0 image.
+3. Publish products-vegetables on port 8081. The application listens on port 80.
+4. Run products-vegetables with 3 replicas.
+
+
+---commands for 2, 3, 4---
+
+docker service create --name products-vegetables -p 8081:80 --replicas 3 linuxacademycontent/vegetable-service:1.0.0
